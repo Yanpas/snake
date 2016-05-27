@@ -49,13 +49,22 @@ void Field::play()
 {
 	sf::Time t = clock.getElapsedTime();
 	sf::Time ft = feedclock.getElapsedTime();
-	if (t >= sf::milliseconds(140))
+	if (t >= sf::milliseconds(150))
 	{
 		try {
 			moveSnake();
 		} catch (std::string& s)
 		{
-			sf::sleep(sf::seconds(2));
+			sf::Clock newc;
+			sf::Time t = sf::seconds(0);
+			while (t<sf::seconds(5))
+			{
+				t=newc.getElapsedTime();
+				sf::Event e;
+				window.pollEvent(e);
+				if(e.type==sf::Event::KeyPressed) break;
+				if(e.type==sf::Event::Closed) window.close();
+			}
 			placeSnake();
 		}
 		clock.restart();
@@ -106,27 +115,18 @@ void Field::moveSnake()
 		switch (cell.turns.front())
 		{
 			case Dir::Up:
-				newpos.y -= delta;
+				newpos.y = ((uint)newpos.y - delta + window.getSize().y)%window.getSize().y;
 				break;
 			case Dir::Down:
-				newpos.y += delta;
+				newpos.y = ((uint)newpos.y + delta + window.getSize().y)%window.getSize().y;
 				break;
 			case Dir::Left:
-				newpos.x -= delta;
+				newpos.x = ((uint)newpos.x - delta + window.getSize().x)%window.getSize().x;
 				break;
 			case Dir::Right:
-				newpos.x += delta;
+				newpos.x = ((uint)newpos.x + delta + window.getSize().x)%window.getSize().x;
 				break;
 		}
-
-		if (newpos.x >= window.getSize().x)
-			newpos.x = 0;
-		else if (newpos.x < 0)
-			newpos.x = window.getSize().x;
-		if (newpos.y >= window.getSize().y)
-			newpos.y = 0;
-		else if (newpos.y < 0)
-			newpos.y = window.getSize().y;
 
 		cell.turns.pop_front();
 		if(posset.count(std::make_pair(newpos.x, newpos.y))) throw std::string("Byte");
@@ -134,34 +134,33 @@ void Field::moveSnake()
 		cell.rect.setPosition(newpos);
 
 		if(&cell == &snake.back()
-				and round(newpos.x) == round(apple.rect.getPosition().x)
-				and round(newpos.y) == round(apple.rect.getPosition().y)
-				and snake.size()<100
+				and trunc(newpos.x) == trunc(apple.rect.getPosition().x)
+				and trunc(newpos.y) == trunc(apple.rect.getPosition().y)
 				and apple.visible)
 		{
-			newcell = snake.front();
-			auto newpos2 = newcell.rect.getPosition();
+			newcell.turns = snake.front().turns;
+			auto newcellpos = snake.front().rect.getPosition();
 			switch(newcell.turns.front())
 			{
 				case Dir::Up:
-					newpos2.y += delta;
+					newcellpos.y = ((uint)newcellpos.y + delta + window.getSize().y)%window.getSize().y;
 					break;
 				case Dir::Down:
-					newpos2.y -= delta;
+					newcellpos.y = ((uint)newcellpos.y - delta + window.getSize().y)%window.getSize().y;
 					break;
 				case Dir::Left:
-					newpos2.x += delta;
+					newcellpos.x = ((uint)newcellpos.x + delta + window.getSize().x)%window.getSize().x;
 					break;
 				case Dir::Right:
-					newpos2.x -= delta;
+					newcellpos.x = ((uint)newcellpos.x - delta + window.getSize().x)%window.getSize().x;
 					break;
 			}
-			newcell.rect.setPosition(newpos2);
+			newcell.rect.setPosition(newcellpos);
 			Dir d = newcell.turns.front();
 			newcell.turns.push_front(d);
 			apple.visible=false;
 		}
-		if (!newcell.turns.empty()) snake.push_front(newcell);
+		if (!newcell.turns.empty() and snake.size()<100) snake.push_front(newcell);
 	}
 	/*std::cerr << "Head x: " << snake.back().rect.getPosition().x << "\ty: "
 			<< snake.back().rect.getPosition().y << std::endl ;*/
