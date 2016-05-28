@@ -77,14 +77,11 @@ void Field::play()
 			feedclock.restart();
 		}
 	}
-	else
+	else if(ft >= sf::seconds(5))
 	{
-		if(ft >= sf::seconds(2))
-		{
-			apple.visible = true;
-			apple.place(this);
-			feedclock.restart();
-		}
+		apple.visible = true;
+		apple.place(this);
+		feedclock.restart();
 	}
 }
 
@@ -159,11 +156,10 @@ void Field::moveSnake()
 			Dir d = newcell.turns.front();
 			newcell.turns.push_front(d);
 			apple.visible=false;
+			feedclock.restart();
 		}
-		if (!newcell.turns.empty() and snake.size()<100) snake.push_front(newcell);
 	}
-	/*std::cerr << "Head x: " << snake.back().rect.getPosition().x << "\ty: "
-			<< snake.back().rect.getPosition().y << std::endl ;*/
+	if (!newcell.turns.empty() and snake.size()<100) snake.push_front(newcell);
 }
 
 void Field::refresh()
